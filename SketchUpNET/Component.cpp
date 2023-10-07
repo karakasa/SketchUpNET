@@ -40,6 +40,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include "utilities.h"
 #include "Transform.h"
 #include "Instance.h"
+#include "GeometryInput.h"
+#include "GeometryInputReference.h"
 
 using namespace System;
 using namespace System::Collections;
@@ -73,6 +75,28 @@ namespace SketchUpNET
 
 		Component(){};
 	internal:
+
+		SUComponentDefinitionRef CreateEmptyObject()
+		{
+			SUComponentDefinitionRef def = SU_INVALID;
+
+			SUComponentDefinitionCreate(&def);
+
+			return def;
+		}
+
+		void FillContents(const SUComponentDefinitionRef& def)
+		{
+			CHECK(SUComponentDefinitionSetName(def, Utilities::ToString(Name).get()));
+			CHECK(SUComponentDefinitionSetDescription(def, Utilities::ToString(Description).get()));
+
+			SUEntitiesRef entities = SU_INVALID;
+			CHECK(SUComponentDefinitionGetEntities(def, &entities));
+
+			// auto input = CreateGeometryInput(Surfaces, Edges, Curves);
+			// CHECK(SUEntitiesFill(entities, input.ref(), true));
+		}
+
 		static Component^ FromSU(SUComponentDefinitionRef comp, bool includeMeshes, System::Collections::Generic::Dictionary<String^, Material^>^ materials)
 		{
 			SUStringRef name = SU_INVALID;

@@ -67,10 +67,10 @@ namespace SketchUpNET
 			return gcnew System::String(name_utf8, 0, name_length, System::Text::Encoding::UTF8);
 		}
 
-		static const char* ToString(System::String^ value)
+		static std::unique_ptr<char[]> ToString(System::String^ value)
 		{
 			array<unsigned char>^ bytes = System::Text::Encoding::UTF8->GetBytes(value);
-			char* result = new char[bytes->Length + 1];
+			std::unique_ptr<char[]> result(new char[bytes->Length + 1]);
 			result[bytes->Length] = 0;
 			int i = 0;
 			for each(unsigned char c in bytes) {
@@ -79,12 +79,13 @@ namespace SketchUpNET
 			return result;
 		}
 
-		static const char* ToCharArray(SUStringRef name)
+		static std::unique_ptr<char[]> ToCharArray(SUStringRef name)
 		{
 			size_t name_length = 0;
 			SUStringGetUTF8Length(name, &name_length);
-			char* name_utf8 = new char[name_length + 1];
-			SUStringGetUTF8(name, name_length + 1, name_utf8, &name_length);
+			std::unique_ptr<char[]> name_utf8(new char[name_length + 1]);
+			SUStringGetUTF8(name, name_length + 1, name_utf8.get(), &name_length);
+
 			return name_utf8;
 		}
 

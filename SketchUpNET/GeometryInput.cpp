@@ -18,60 +18,53 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
-
 #pragma once
-
 #include <SketchUpAPI/slapi.h>
 #include <SketchUpAPI/geometry.h>
 #include <SketchUpAPI/initialize.h>
 #include <SketchUpAPI/unicodestring.h>
 #include <SketchUpAPI/model/model.h>
 #include <SketchUpAPI/model/entities.h>
+#include <SketchUpAPI/model/face.h>
+#include <SketchUpAPI/model/edge.h>
 #include <SketchUpAPI/model/layer.h>
+#include <SketchUpAPI/model/vertex.h>
+#include <SketchUpAPI/model/component_instance.h>
+#include <SketchUpAPI/model/component_definition.h>
+#include <SketchUpAPI/model/drawing_element.h>
 #include <msclr/marshal.h>
+#include <msclr/marshal_cppstd.h>
 #include <vector>
-#include <SketchUpAPI/model/options_provider.h>
-#include <SketchUpAPI/model/options_manager.h>
-#include "Utilities.h"
-#include "OptionsProvider.h"
+#include "transform.h"
+#include "utilities.h"
+#include "Material.h"
 
-using namespace System;
-using namespace System::Collections;
-using namespace System::Collections::Generic;
+#include "Surface.h"
+#include "Curve.h"
 
 namespace SketchUpNET
 {
-	public ref class OptionsManager
+	using namespace System::Collections::Generic;
+
+	GeometryInputReference CreateGeometryInput(List<Surface^>^ surfaces, List<Edge^>^ edges, List<Curve^>^ curves)
 	{
-	public:
-		List<OptionsProvider^>^ OptionsProviders;
-		OptionsManager() {};
-		OptionsManager(List<OptionsProvider^>^ providers) {
-			this->OptionsProviders = providers;
-		};
+		GeometryInputReference input;
 
-	internal:
-		static OptionsManager^ FromModel(SUModelRef model) {
-			List<OptionsProvider^>^ providers = gcnew List<OptionsProvider^>();
-			SUOptionsManagerRef om = SU_INVALID;
-			SUModelGetOptionsManager(model, &om);
-			size_t ctr = 0;
-			SUOptionsManagerGetNumOptionsProviders(om, &ctr);
-			if (ctr > 0)
-			{
-				SUStringRef optionmanagernames[] = SU_INVALID;
-				size_t omn_ctr = 0;
-				SUOptionsManagerGetOptionsProviderNames(om, ctr, optionmanagernames, &omn_ctr);
+		for each (auto surface in surfaces)
+		{
+			surface->CreateInGeometryInput(input);
+		}
 
-				for (size_t i = 0; i < omn_ctr; i++) {
-					SUOptionsProviderRef provider_ref = SU_INVALID;
-					SUOptionsManagerGetOptionsProviderByName(om, Utilities::ToCharArray(optionmanagernames[i]).get(), &provider_ref);
-					providers->Add(OptionsProvider::FromSU(provider_ref));
-				}
-			}
-			return gcnew OptionsManager(providers);
-		};
-	};
+		for each (auto edge in surfaces)
+		{
+			edge->CreateInGeometryInput(input);
+		}
 
+		for each (auto curve in surfaces)
+		{
+			curve->CreateInGeometryInput(input);
+		}
 
+		return std::move(input);
+	}
 }

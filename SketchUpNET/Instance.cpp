@@ -33,6 +33,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <SketchUpAPI/model/component_definition.h>
 #include <SketchUpAPI/model/drawing_element.h>
 #include <msclr/marshal.h>
+#include <msclr/marshal_cppstd.h>
 #include <vector>
 #include "transform.h"
 #include "utilities.h"
@@ -68,6 +69,21 @@ namespace SketchUpNET
 
 		Instance(){};
 	internal:
+
+		SUComponentInstanceRef ToSU(SUComponentDefinitionRef definition)
+		{
+			SUComponentInstanceRef instance = SU_INVALID;
+			CHECK(SUComponentDefinitionCreateInstance(definition, &instance));
+
+			CHECK(SUComponentInstanceSetName(instance, Utilities::ToString(Name).get()));
+			CHECK(SUComponentInstanceSetGuid(instance, Utilities::ToString(Guid).get()));
+
+			auto& xform = std::move(Transformation->ToSU());
+			CHECK(SUComponentInstanceSetTransform(instance, &xform));
+
+			return instance;
+		}
+
 		static Instance^ FromSU(SUComponentInstanceRef comp, System::Collections::Generic::Dictionary<String^, SketchUpNET::Material^>^ materials)
 		{
 			SUStringRef name = SU_INVALID;

@@ -36,6 +36,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <vector>
 #include "vertex.h"
 #include "utilities.h"
+//#include "GeometryInput.h"
+#include "GeometryInputReference.h"
 
 using namespace System;
 using namespace System::Collections;
@@ -110,6 +112,11 @@ namespace SketchUpNET
 			SUPoint3D end = this->End->ToSU();
 			SUEdgeCreate(&edge,&start,&end);
 			return edge;
+		}
+
+		void CreateInGeometryInput(GeometryInputReference& input)
+		{
+			// TODO. Only required for isolated edges
 		}
 
 		static SUEdgeRef* ListToSU(List<Edge^>^ list)

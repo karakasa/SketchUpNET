@@ -66,7 +66,7 @@ namespace SketchUpNET
 				SUOptionsProviderGetKeys(provider_ref, ctr, keys, &keys_ctr);
 				for (size_t i = 0; i < keys_ctr; i++) {
 					SUTypedValueRef value_ref = SU_INVALID;
-					SUOptionsProviderGetValue(provider_ref, Utilities::ToCharArray(keys[i]), &value_ref);
+					SUOptionsProviderGetValue(provider_ref, Utilities::ToCharArray(keys[i]).get(), &value_ref);
 					options->Add(Utilities::GetString(keys[i]), Utilities::ToObject(value_ref));
 				}
 

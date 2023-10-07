@@ -31,7 +31,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <SketchUpAPI/model/edge.h>
 #include <SketchUpAPI/model/vertex.h>
 #include <msclr/marshal.h>
+#include <msclr/marshal_cppstd.h>
 #include <vector>
+#include <map>
+#include <string>
 #include "Utilities.h"
 #include "Surface.h"
 #include "Edge.h"
@@ -41,6 +44,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include "Instance.h"
 #include "Component.h"
 #include "OptionsManager.h"
+#include "GeometryInput.h"
 
 using namespace System;
 using namespace System::Collections;
@@ -58,7 +62,13 @@ namespace SketchUpNET
 		V2018,
 		V2019,
 		V2020,
-		V2021
+		V2021,
+		V3 = 100003,
+		V4 = 100004,
+		V5 = 100005,
+		V6 = 100006,
+		V7 = 100007,
+		V8 = 100008
 	};
 
 	/// <summary>
@@ -133,15 +143,14 @@ namespace SketchUpNET
 		/// <param name="includeMeshes">Load model including meshed geometries</param>
 		bool LoadModel(System::String^ filename, bool includeMeshes)
 		{
-			const char* path = Utilities::ToString(filename);
+			const char* path = Utilities::ToString(filename).get();
 
 			SUInitialize();
 
 
 			SUModelRef model = SU_INVALID;
 			SUModelLoadStatus status;
-			SUModelCreateFromFileWithStatus(&model, path, &status);
-			
+			SUModelCreateFromFileWithStatus(&model, path, &status);	
 
 			if (status == SUModelLoadStatus_Success_MoreRecent)
 				MoreRecentFileVersion = true;
@@ -257,7 +266,7 @@ namespace SketchUpNET
 		/// <param name="newFilename">Path to new .skp file</param>
 		bool SaveAs(System::String^ filename, SKPVersion version, System::String^ newFilename)
 		{
-			const char* path = Utilities::ToString(filename);
+			const char* path = Utilities::ToString(filename).get();
 			SUInitialize();
 
 			SUModelRef model = SU_INVALID;
@@ -271,7 +280,7 @@ namespace SketchUpNET
 
 			SUModelVersion saveversion = ToSUVersion(version);
 
-			SUModelSaveToFileWithVersion(model, Utilities::ToString(newFilename), saveversion);
+			SUModelSaveToFileWithVersion(model, Utilities::ToString(newFilename).get(), saveversion);
 
 			SUModelRelease(&model);
 			SUTerminate();
@@ -284,7 +293,7 @@ namespace SketchUpNET
 		/// <param name="filename">Path to .skp file</param>
 		bool AppendToModel(System::String^ filename)
 		{
-			const char* path = Utilities::ToString(filename);
+			const char* path = Utilities::ToString(filename).get();
 
 			SUInitialize();
 
@@ -307,7 +316,7 @@ namespace SketchUpNET
 			SUEntitiesAddEdges(entities, Edges->Count, Edge::ListToSU(Edges));
 			SUEntitiesAddCurves(entities, Curves->Count, Curve::ListToSU(Curves));
 
-			SUModelSaveToFile(model, Utilities::ToString(filename));
+			SUModelSaveToFile(model, Utilities::ToString(filename).get());
 			
 			SUModelRelease(&model);
 			SUTerminate();
@@ -343,12 +352,14 @@ namespace SketchUpNET
 			SUEntitiesRef entities = SU_INVALID;
 			SUModelGetEntities(model, &entities);
 
-			SUEntitiesAddFaces(entities, Surfaces->Count, Surface::ListToSU(Surfaces));
-			SUEntitiesAddEdges(entities, Edges->Count, Edge::ListToSU(Edges));
-			SUEntitiesAddCurves(entities, Curves->Count, Curve::ListToSU(Curves));
-			
+			auto input = CreateGeometryInput(Surfaces, Edges, Curves);
+			SUEntitiesFill(entities, input.ref(), true);
+
+			WriteComponentsAndInstances(model, entities);
+
 			SUModelVersion v = ToSUVersion(version);
-			SUModelSaveToFileWithVersion(model, Utilities::ToString(filename), v);
+			auto path = Utilities::ToString(filename);
+			SUModelSaveToFileWithVersion(model, path.get(), v);
 			SUModelRelease(&model);
 			SUTerminate();
 
@@ -356,6 +367,50 @@ namespace SketchUpNET
 		}
 
 		private:
+
+			void WriteComponentsAndInstances(const SUModelRef& model, const SUEntitiesRef& entities)
+			{
+				std::vector<SUComponentDefinitionRef> components(Components->Count);
+				std::map<std::string, SUComponentDefinitionRef> mappings;
+
+				auto enumerator = Components->GetEnumerator();
+				int i = 0;
+
+				while (enumerator.MoveNext()) {
+					auto kv = enumerator.Current;
+					auto comp = kv.Value->CreateEmptyObject();
+					auto guid = (kv.Value)->Guid;
+					auto component_name = msclr::interop::marshal_as<std::string>(guid);
+
+					components[i] = comp;
+					mappings[component_name] = comp;
+
+					++i;
+				}
+
+				SUModelAddComponentDefinitions(model, components.size(), components.data());
+
+				enumerator = Components->GetEnumerator();
+				i = 0;
+
+				while (enumerator.MoveNext()) {
+					auto comp = enumerator.Current.Value;
+					comp->FillContents(components[i]);
+
+					++i;
+				}
+
+				for (auto i = 0; i < Instances->Count; i++) {
+					auto instance = Instances[i];
+					auto pid = instance->ParentID;
+
+					auto component_name = msclr::interop::marshal_as<std::string>(pid);
+
+					auto suInstance = instance->ToSU(mappings[component_name]);
+
+					SUEntitiesAddInstance(entities, suInstance, nullptr);
+				}
+			}
 
 			SUModelVersion ToSUVersion(SketchUpNET::SKPVersion version) {
 				switch (version) {
@@ -377,6 +432,18 @@ namespace SketchUpNET
 					return SUModelVersion::SUModelVersion_SU2020;
 				case SketchUpNET::SKPVersion::V2021:
 					return SUModelVersion::SUModelVersion_SU2021;
+				case SketchUpNET::SKPVersion::V3:
+					return SUModelVersion::SUModelVersion_SU3;
+				case SketchUpNET::SKPVersion::V4:
+					return SUModelVersion::SUModelVersion_SU4;
+				case SketchUpNET::SKPVersion::V5:
+					return SUModelVersion::SUModelVersion_SU5;
+				case SketchUpNET::SKPVersion::V6:
+					return SUModelVersion::SUModelVersion_SU6;
+				case SketchUpNET::SKPVersion::V7:
+					return SUModelVersion::SUModelVersion_SU7;
+				case SketchUpNET::SKPVersion::V8:
+					return SUModelVersion::SUModelVersion_SU8;
 				default:
 					return SUModelVersion::SUModelVersion_SU2021;
 				}

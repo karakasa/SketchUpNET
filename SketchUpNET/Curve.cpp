@@ -33,7 +33,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <SketchUpAPI/model/curve.h>
 #include <msclr/marshal.h>
 #include <vector>
-#include "edge.h"
+#include "Edge.h"
+//#include "GeometryInput.h"
+#include "GeometryInputReference.h"
 
 using namespace System;
 using namespace System::Collections;
@@ -111,6 +113,11 @@ namespace SketchUpNET
 			}
 			SUCurveCreateWithEdges(&curve, edges, size);
 			return curve;
+		}
+
+		void CreateInGeometryInput(GeometryInputReference& input)
+		{
+			// TODO. Only required for isolated edges
 		}
 
 		static SUCurveRef* ListToSU(List<Curve^>^ curves)

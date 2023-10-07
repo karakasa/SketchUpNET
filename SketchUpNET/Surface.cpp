@@ -40,6 +40,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include "utilities.h"
 #include "Mesh.h"
 #include "Material.h"
+//#include "GeometryInput.h"
+#include "GeometryInputReference.h"
 
 using namespace System;
 using namespace System::Collections;
@@ -219,6 +221,54 @@ namespace SketchUpNET
 			}		
 			
 			return face;
+		}
+
+		void CreateInGeometryInput(GeometryInputReference& input)
+		{
+			SUFaceRef face = SU_INVALID;
+			SULoopInputRef outer_loop = SU_INVALID;
+			CHECK(SULoopInputCreate(&outer_loop));
+
+			size_t faceIndex;
+
+			int count = OuterEdges->Edges->Count;
+			if (count > 0) {
+				for (int i = 0; i < count; ++i) {
+					auto pt = OuterEdges->Edges[i]->Start->ToSU();
+					auto ptIndex = input.add_point(pt);
+					CHECK(SULoopInputAddVertexIndex(outer_loop, ptIndex));
+				}
+
+				CHECK(SUGeometryInputAddFace(input.ref(), &outer_loop, &faceIndex));
+			}
+			else {
+				// Maintaining backwards compatibility for 
+				// surfaces only consisting of outer vertices
+				count = Vertices->Count;
+				for (int i = 0; i < count; ++i) {
+					auto pt = Vertices[i]->ToSU();
+					auto ptIndex = input.add_point(pt);
+					CHECK(SULoopInputAddVertexIndex(outer_loop, ptIndex));
+				}
+				
+				CHECK(SUGeometryInputAddFace(input.ref(), &outer_loop, &faceIndex));
+			}
+
+			int innner_count = InnerEdges->Count;
+			if (innner_count > 0) {
+				for (int i = 0; i < innner_count; ++i) {
+					SULoopInputRef inner_loop = SU_INVALID;
+					CHECK(SULoopInputCreate(&inner_loop));
+					int count = InnerEdges[i]->Edges->Count;
+					for (int j = 0; j < count; ++j) {
+						auto pt = InnerEdges[i]->Edges[j]->Start->ToSU();
+						auto ptIndex = input.add_point(pt);
+						CHECK(SULoopInputAddVertexIndex(inner_loop, ptIndex));
+					}
+
+					CHECK(SUGeometryInputFaceAddInnerLoop(input.ref(), faceIndex, &inner_loop));
+				}
+			}
 		}
 
 		static SUFaceRef* ListToSU(List<Surface^>^ list)

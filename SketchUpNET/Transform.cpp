@@ -101,6 +101,21 @@ namespace SketchUpNET
 
 		};
 
+		SUTransformation ToSU()
+		{
+			SUTransformation transformation;
+
+			auto data = transformation.values;
+
+			for (int i = 0; i < 16; i++)
+				if (i == 12 || i == 13 || i == 14)
+					data[i] = this->Data[i] / 0.0254;
+				else
+					data[i] = this->Data[i];
+
+			return std::move(transformation);
+		}
+
 	};
 
 
