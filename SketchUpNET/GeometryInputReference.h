@@ -23,12 +23,8 @@ namespace SketchUpNET
 	{
 	public:
 		GeometryInputReference() { SUGeometryInputCreate(&p); }
-		~GeometryInputReference() { SUGeometryInputRelease(&p); }
 
-		GeometryInputReference(GeometryInputReference&& x)
-		{
-			p = x.p;
-		}
+		void dispose() { SUGeometryInputRelease(&p); }
 
 		SUGeometryInputRef ref() {
 			return p;
@@ -48,11 +44,7 @@ namespace SketchUpNET
 		
 	private:
 		size_t pt_count = 0;
-
 		SUGeometryInputRef p;
-
-		GeometryInputReference(GeometryInputReference const&) = delete;
-		GeometryInputReference& operator= (GeometryInputReference const&) = delete;
 	};
 
 }

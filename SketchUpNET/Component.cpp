@@ -97,6 +97,8 @@ namespace SketchUpNET
 
 			auto input = CreateGeometryInput(Surfaces, Edges, Curves);
 			CHECK(SUEntitiesFill(entities, input.ref(), true));
+
+			input.dispose();
 		}
 
 		static Component^ FromSU(SUComponentDefinitionRef comp, bool includeMeshes, System::Collections::Generic::Dictionary<String^, Material^>^ materials)

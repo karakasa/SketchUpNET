@@ -55,6 +55,6 @@ namespace SketchUpNET
 			surface->CreateInGeometryInput(input);
 		}
 
-		return std::move(input);
+		return input;
 	}
 }

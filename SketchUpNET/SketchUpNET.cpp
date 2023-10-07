@@ -315,6 +315,8 @@ namespace SketchUpNET
 			auto input = CreateGeometryInput(Surfaces, Edges, Curves);
 			SUEntitiesFill(entities, input.ref(), true);
 
+			input.dispose();
+
 			SUEntitiesAddEdges(entities, Edges->Count, Edge::ListToSU(Edges));
 			SUEntitiesAddCurves(entities, Curves->Count, Curve::ListToSU(Curves));
 
@@ -363,6 +365,8 @@ namespace SketchUpNET
 
 			auto input = CreateGeometryInput(Surfaces, Edges, Curves);
 			SUEntitiesFill(entities, input.ref(), true);
+
+			input.dispose();
 
 			SUEntitiesAddEdges(entities, Edges->Count, Edge::ListToSU(Edges));
 			SUEntitiesAddCurves(entities, Curves->Count, Curve::ListToSU(Curves));
