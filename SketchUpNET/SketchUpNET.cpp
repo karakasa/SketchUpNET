@@ -378,7 +378,7 @@ namespace SketchUpNET
 
 				while (enumerator.MoveNext()) {
 					auto kv = enumerator.Current;
-					auto comp = kv.Value->CreateEmptyObject();
+					auto comp = kv.Value->CreateDefinition();
 					auto guid = (kv.Value)->Guid;
 					auto component_name = msclr::interop::marshal_as<std::string>(guid);
 
@@ -388,7 +388,7 @@ namespace SketchUpNET
 					++i;
 				}
 
-				SUModelAddComponentDefinitions(model, components.size(), components.data());
+				CHECK(SUModelAddComponentDefinitions(model, components.size(), components.data()));
 
 				enumerator = Components->GetEnumerator();
 				i = 0;
@@ -406,7 +406,13 @@ namespace SketchUpNET
 
 					auto component_name = msclr::interop::marshal_as<std::string>(pid);
 
-					auto suInstance = instance->ToSU(mappings[component_name]);
+					auto iter = mappings.find(component_name);
+					if (iter == mappings.end())
+					{
+						throw gcnew System::InvalidOperationException("Cannot find component " + pid);
+					}
+
+					auto suInstance = instance->ToSU(iter->second);
 
 					SUEntitiesAddInstance(entities, suInstance, nullptr);
 				}

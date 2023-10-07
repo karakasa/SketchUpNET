@@ -76,25 +76,27 @@ namespace SketchUpNET
 		Component(){};
 	internal:
 
-		SUComponentDefinitionRef CreateEmptyObject()
+		SUComponentDefinitionRef CreateDefinition()
 		{
 			SUComponentDefinitionRef def = SU_INVALID;
 
 			SUComponentDefinitionCreate(&def);
+
+			CHECK(SUComponentDefinitionSetName(def, Utilities::ToString(Name).get()));
+
+			if (!System::String::IsNullOrEmpty(Description))
+				CHECK(SUComponentDefinitionSetDescription(def, Utilities::ToString(Description).get()));
 
 			return def;
 		}
 
 		void FillContents(const SUComponentDefinitionRef& def)
 		{
-			CHECK(SUComponentDefinitionSetName(def, Utilities::ToString(Name).get()));
-			CHECK(SUComponentDefinitionSetDescription(def, Utilities::ToString(Description).get()));
-
 			SUEntitiesRef entities = SU_INVALID;
 			CHECK(SUComponentDefinitionGetEntities(def, &entities));
 
-			// auto input = CreateGeometryInput(Surfaces, Edges, Curves);
-			// CHECK(SUEntitiesFill(entities, input.ref(), true));
+			auto input = CreateGeometryInput(Surfaces, Edges, Curves);
+			CHECK(SUEntitiesFill(entities, input.ref(), true));
 		}
 
 		static Component^ FromSU(SUComponentDefinitionRef comp, bool includeMeshes, System::Collections::Generic::Dictionary<String^, Material^>^ materials)

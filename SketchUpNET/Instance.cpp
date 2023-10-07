@@ -75,8 +75,8 @@ namespace SketchUpNET
 			SUComponentInstanceRef instance = SU_INVALID;
 			CHECK(SUComponentDefinitionCreateInstance(definition, &instance));
 
-			CHECK(SUComponentInstanceSetName(instance, Utilities::ToString(Name).get()));
-			CHECK(SUComponentInstanceSetGuid(instance, Utilities::ToString(Guid).get()));
+			//CHECK(SUComponentInstanceSetName(instance, Utilities::ToString(Name).get()));
+			//CHECK(SUComponentInstanceSetGuid(instance, Utilities::ToString(Guid).get()));
 
 			auto& xform = std::move(Transformation->ToSU());
 			CHECK(SUComponentInstanceSetTransform(instance, &xform));
