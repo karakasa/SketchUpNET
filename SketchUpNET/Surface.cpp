@@ -271,17 +271,6 @@ namespace SketchUpNET
 			}
 		}
 
-		static SUFaceRef* ListToSU(List<Surface^>^ list)
-		{
-			size_t size = list->Count;
-			SUFaceRef * result = (SUFaceRef *)malloc(*&size * sizeof(SUFaceRef));
-			for (int i = 0; i < size; i++)
-			{
-				result[i] = list[i]->ToSU();
-			}
-			return result;
-		}
-
 		static Surface^ FromSU(SUFaceRef face, bool includeMeshes, System::Collections::Generic::Dictionary<String^, Material^>^ materials)
 		{
 			List<Loop^>^ inner = gcnew List<Loop^>();

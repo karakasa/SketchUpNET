@@ -55,16 +55,6 @@ namespace SketchUpNET
 			surface->CreateInGeometryInput(input);
 		}
 
-		for each (auto edge in surfaces)
-		{
-			edge->CreateInGeometryInput(input);
-		}
-
-		for each (auto curve in surfaces)
-		{
-			curve->CreateInGeometryInput(input);
-		}
-
 		return std::move(input);
 	}
 }

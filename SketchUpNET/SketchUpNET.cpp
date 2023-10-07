@@ -291,7 +291,7 @@ namespace SketchUpNET
 		/// Append current SketchUp Model Data to an existing SketchUp file.
 		/// </summary>
 		/// <param name="filename">Path to .skp file</param>
-		bool AppendToModel(System::String^ filename)
+		bool AppendToModel(System::String^ filename, SKPVersion version)
 		{
 			const char* path = Utilities::ToString(filename).get();
 
@@ -312,17 +312,26 @@ namespace SketchUpNET
 			SUEntitiesRef entities = SU_INVALID;
 			SUModelGetEntities(model, &entities);
 
-			SUEntitiesAddFaces(entities, Surfaces->Count, Surface::ListToSU(Surfaces));
+			auto input = CreateGeometryInput(Surfaces, Edges, Curves);
+			SUEntitiesFill(entities, input.ref(), true);
+
 			SUEntitiesAddEdges(entities, Edges->Count, Edge::ListToSU(Edges));
 			SUEntitiesAddCurves(entities, Curves->Count, Curve::ListToSU(Curves));
 
-			SUModelSaveToFile(model, Utilities::ToString(filename).get());
+			SUModelVersion saveversion = ToSUVersion(version);
+
+			SUModelSaveToFileWithVersion(model, Utilities::ToString(filename).get(), saveversion);
 			
 			SUModelRelease(&model);
 			SUTerminate();
 			return true;
 
 		};
+
+		bool AppendToModel(System::String^ filename)
+		{
+			return AppendToModel(filename, SKPVersion::V2021);
+		}
 
 		/// <summary>
 		/// Write current SketchUp Model to a new SketchUp file using the latest version.
@@ -354,6 +363,9 @@ namespace SketchUpNET
 
 			auto input = CreateGeometryInput(Surfaces, Edges, Curves);
 			SUEntitiesFill(entities, input.ref(), true);
+
+			SUEntitiesAddEdges(entities, Edges->Count, Edge::ListToSU(Edges));
+			SUEntitiesAddCurves(entities, Curves->Count, Curve::ListToSU(Curves));
 
 			WriteComponentsAndInstances(model, entities);
 

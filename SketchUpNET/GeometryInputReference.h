@@ -23,7 +23,7 @@ namespace SketchUpNET
 	{
 	public:
 		GeometryInputReference() { SUGeometryInputCreate(&p); }
-		~GeometryInputReference() { /*SUGeometryInputRelease(&p);*/ }
+		~GeometryInputReference() { SUGeometryInputRelease(&p); }
 
 		GeometryInputReference(GeometryInputReference&& x)
 		{
