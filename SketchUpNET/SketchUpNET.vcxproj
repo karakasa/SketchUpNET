@@ -173,6 +173,7 @@
   <ItemGroup>
     <ClInclude Include="Color.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="ComponentMappings.h" />
     <ClInclude Include="Curve.h" />
     <ClInclude Include="Edge.h" />
     <ClInclude Include="GeometryInput.h" />

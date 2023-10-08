@@ -45,6 +45,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include "Component.h"
 #include "OptionsManager.h"
 #include "GeometryInput.h"
+#include "ComponentMappings.h"
 
 using namespace System;
 using namespace System::Collections;
@@ -382,12 +383,32 @@ namespace SketchUpNET
 			return true;
 		}
 
+		internal:
+			static void WriteInstances(const SUEntitiesRef& entities, List<Instance^>^ instances)
+			{
+				for (auto i = 0; i < instances->Count; i++) {
+					auto instance = instances[i];
+					auto pid = instance->ParentID;
+
+					auto component_name = msclr::interop::marshal_as<std::string>(pid);
+
+					auto iter = component_mapping::mappings->find(component_name);
+					if (iter == component_mapping::mappings->end())
+					{
+						throw gcnew System::InvalidOperationException("Cannot find component " + pid);
+					}
+
+					auto suInstance = instance->ToSU(iter->second);
+
+					SUEntitiesAddInstance(entities, suInstance, nullptr);
+				}
+			}
+
 		private:
 
 			void WriteComponentsAndInstances(const SUModelRef& model, const SUEntitiesRef& entities)
 			{
 				std::vector<SUComponentDefinitionRef> components(Components->Count);
-				std::map<std::string, SUComponentDefinitionRef> mappings;
 
 				auto enumerator = Components->GetEnumerator();
 				int i = 0;
@@ -399,7 +420,7 @@ namespace SketchUpNET
 					auto component_name = msclr::interop::marshal_as<std::string>(guid);
 
 					components[i] = comp;
-					mappings[component_name] = comp;
+					(*component_mapping::mappings)[component_name] = comp;
 
 					++i;
 				}
@@ -416,22 +437,7 @@ namespace SketchUpNET
 					++i;
 				}
 
-				for (auto i = 0; i < Instances->Count; i++) {
-					auto instance = Instances[i];
-					auto pid = instance->ParentID;
-
-					auto component_name = msclr::interop::marshal_as<std::string>(pid);
-
-					auto iter = mappings.find(component_name);
-					if (iter == mappings.end())
-					{
-						throw gcnew System::InvalidOperationException("Cannot find component " + pid);
-					}
-
-					auto suInstance = instance->ToSU(iter->second);
-
-					SUEntitiesAddInstance(entities, suInstance, nullptr);
-				}
+				WriteInstances(entities, Instances);
 			}
 
 			SUModelVersion ToSUVersion(SketchUpNET::SKPVersion version) {
